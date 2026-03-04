@@ -47,6 +47,12 @@
 - [x] Spec open questions updated: marked 4 as resolved, clarified Dr. Retina death list, noted rival Haras design status.
 
 ### Completed (this session)
+- [x] Level 12 (Zeus) + Level 13 (Final): reduced CLOUD stripe from y<=2 (48 tiles) to y===0 only (16 tiles) — same fix as Level 5. Temple zone expanded to cover y=1-4 in Level 12.
+- [x] Level 13 horse spawn softlock: horses were spawning at x=15 (portal column), potentially blocking Haras from reaching portal at (15,5)/(15,6). Fixed: spawn moved to x=14.
+- [x] Level 11 difficulty pass: WALL barrier at x=10 (EQUIPMENT gap at y=5) extends Runo escape from 3→4 enemy turns. HP 45→35 so burst damage can kill him in time.
+- [x] Back button (cutscene.js): shows previous line instantly (no typewriter re-run). Button visibility: #555→#888.
+- [x] Level 5 CLOUD stripe fixed: WALL border at y=0+y=7; 4 accent CLOUD tiles at corners.
+- [x] Level 7 cerealLarry hat: #ffffff→#fff0b0 (golden cream) + #cc9900 outline stroke — reads as costume, not blank UI space.
 - [x] Playtest feedback batch — 8 items fixed: Axe Larry evil brows; Level 3 robot removed (2 guards + boss only); femaleLarry nerfed (HP16 ATK4 DEF2), back-line guards→robots in L9; Level 8 OFFICE_FLOOR doorways fixed + EQUIPMENT desks added; Level 9 mall improved with GYM_FLOOR shops + FOREST planters; ldSlots capped (L6-7: 2, L8-9: 2, L10: 2, L11: 1); LD death persistence in loadLevel(); Mr. Runo non-capturable confirmed already working; Tetris render code verified correct.
 - [x] Tutorial redesign: expanded 8×6 → 9×7 map; added Haras as player unit at (1,3); terrain: WALL(3,1), WALL(3,5), FOREST(4,3); civilians at (5,2),(6,3),(7,5); 9-line intro dialogue covers all mechanics (select, blue tiles, movement, wall/forest terrain, red tiles, attack, Wait button, auto end-turn, counterattack, unit info panel hover, Haras = VIP); 2 Tetris teaser lines added to victory dialogue. DIALOGUE.md synced.
 - [x] Larry Dunk selector cards enhanced: added `desc` field to all 12 LD templates in units.js; card HTML now shows name, ★ ability tag, stat row (HP/ATK/DEF/MOV/RNG), and ability description sentence. CSS added `.ld-stats` (blue) and `.ld-desc` (grey) rules; card min-width 180→210px.

@@ -51,7 +51,8 @@ let game = {
     capturedLarryDunks: [],   // persistent: types captured via Tetris across levels
     selectedLarryDunks: [],   // per-battle: types chosen in pre-level selector
     _ldSelectorCallback: null,
-    _ldSelectorMaxSlots: 0
+    _ldSelectorMaxSlots: 0,
+    pendingMoveTile: null     // tile clicked but not yet confirmed {tx, ty}
 };
 
 const Terrain = {

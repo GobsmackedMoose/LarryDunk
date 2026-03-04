@@ -123,6 +123,36 @@ canvas {
 #actionPanel button:hover    { background: #3a3a6a; border-color: #6a6aaa; }
 #actionPanel button:disabled { opacity: 0.4; cursor: default; }
 
+/* ---- MOVE CONFIRM PANEL ---- */
+#moveConfirm {
+    position: fixed;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(10, 10, 40, 0.97);
+    border: 2px solid #6a6aaa;
+    border-radius: 4px;
+    padding: 6px;
+    z-index: 50;
+    pointer-events: auto;
+    min-width: 110px;
+}
+#moveConfirm button {
+    background: #2a2a4a;
+    color: #aaccff;
+    border: 1px solid #4a4a8a;
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+}
+#moveConfirm button:hover { background: #3a3a6a; border-color: #8a8acc; }
+#moveConfirm button:last-child { color: #aa8888; }
+#moveConfirm button:last-child:hover { color: #cc9999; }
+
 /* ---- DIALOGUE BOX ---- */
 #dialogueBox {
     position: absolute;

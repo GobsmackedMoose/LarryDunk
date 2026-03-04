@@ -53,8 +53,14 @@ function handleGridClick(gx, gy) {
     } else if (game.phase === GamePhase.UNIT_SELECTED) {
         const clickedMove = game.moveTiles.find(t => t.x === gx && t.y === gy);
         if (clickedMove) {
-            moveUnit(game.selectedUnit, gx, gy);
+            // Show confirmation panel instead of moving immediately
+            game.pendingMoveTile = { tx: gx, ty: gy };
+            positionMoveConfirm(gx, gy);
+            document.getElementById('moveConfirm').style.display = 'flex';
         } else {
+            // Clicked outside movement range — cancel pending and deselect
+            game.pendingMoveTile = null;
+            document.getElementById('moveConfirm').style.display = 'none';
             deselectUnit();
             const unit = getUnitAt(gx, gy);
             if (unit && unit.team === 'player' && !unit.acted) selectUnit(unit);
@@ -151,6 +157,8 @@ function finishUnitAction() {
     game.selectedUnit = null;
     game.moveTiles = [];
     game.attackTiles = [];
+    game.pendingMoveTile = null;
+    document.getElementById('moveConfirm').style.display = 'none';
     game.phase = GamePhase.PLAYER_TURN;
     document.getElementById('btnAttack').style.display = 'none';
     document.getElementById('btnWait').style.display = 'none';
@@ -164,9 +172,39 @@ function deselectUnit() {
     game.selectedUnit = null;
     game.moveTiles = [];
     game.attackTiles = [];
+    game.pendingMoveTile = null;
+    document.getElementById('moveConfirm').style.display = 'none';
     game.phase = GamePhase.PLAYER_TURN;
     document.getElementById('btnAttack').style.display = 'none';
     document.getElementById('btnWait').style.display = 'none';
+}
+
+function confirmMove() {
+    if (!game.pendingMoveTile || !game.selectedUnit) return;
+    const { tx, ty } = game.pendingMoveTile;
+    game.pendingMoveTile = null;
+    document.getElementById('moveConfirm').style.display = 'none';
+    moveUnit(game.selectedUnit, tx, ty);
+}
+
+function cancelMove() {
+    game.pendingMoveTile = null;
+    document.getElementById('moveConfirm').style.display = 'none';
+    // Keep unit selected so player can choose a different tile
+}
+
+function positionMoveConfirm(gx, gy) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+    let vpx = ((gx + 1) * TILE_SIZE + GRID_OFFSET_X) * scaleX + rect.left;
+    let vpy = (gy * TILE_SIZE + GRID_OFFSET_Y) * scaleY + rect.top;
+    // Clamp so panel doesn't go off screen
+    vpx = Math.min(vpx, window.innerWidth - 125);
+    vpy = Math.min(vpy, window.innerHeight - 80);
+    const panel = document.getElementById('moveConfirm');
+    panel.style.left = vpx + 'px';
+    panel.style.top = vpy + 'px';
 }
 
 function endPlayerTurn() {

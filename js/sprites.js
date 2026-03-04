@@ -782,7 +782,14 @@ function drawUnit(unit, x, y) {
         ctx.fillRect(barX, barY, barW * pct, barH);
     }
     if (unit.acted && unit.team === 'player') {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        // Dimmed overlay — clearly exhausted
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
         ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+    } else if (!unit.acted && unit.team === 'player') {
+        // Ready-to-act indicator: bright blue border
+        ctx.strokeStyle = 'rgba(100, 200, 255, 0.85)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 1, y + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        ctx.lineWidth = 1;
     }
 }

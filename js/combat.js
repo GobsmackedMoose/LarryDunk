@@ -71,11 +71,10 @@ function _resolveCombat(attacker, defender, isChain) {
         defender.hp = 0;
 
         if (defender.isLarryDunk && defender.team === 'enemy') {
-            // Lock phase immediately so finishUnitAction/checkVictoryDefeat can't overwrite it
-            defender.hp = 1; // keep alive until Tetris resolves
+            // Keep alive until Tetris resolves; startTetrisCapture sets phase internally
+            defender.hp = 1;
             attacker.acted = true; // mark attacker done now (finishUnitAction won't run)
-            game.phase = GamePhase.TETRIS;
-            setTimeout(() => startTetrisCapture(defender), 50);
+            startTetrisCapture(defender);
         } else {
             defender.alive = false;
             playSound('death');

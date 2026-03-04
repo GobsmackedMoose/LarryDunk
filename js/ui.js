@@ -123,10 +123,21 @@ function render() {
         }
     }
 
-    // Hover range indicator (show any hovered unit's attack reach)
+    // Hover range indicator (show any hovered unit's movement + attack reach)
     if (game.hoveredUnit && game.hoveredUnit.alive &&
         game.phase !== GamePhase.ATTACK_SELECT && game.phase !== GamePhase.UNIT_SELECTED) {
         const hu = game.hoveredUnit;
+        // Movement range — faint blue fill
+        const moveTiles = getMovementTiles(hu);
+        for (const t of moveTiles) {
+            const px = t.x * TILE_SIZE + GRID_OFFSET_X;
+            const py = t.y * TILE_SIZE + GRID_OFFSET_Y;
+            ctx.fillStyle = hu.team === 'player'
+                ? 'rgba(50, 130, 255, 0.12)'
+                : 'rgba(255, 80, 30, 0.10)';
+            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
+        // Attack range — slightly stronger overlay on top of movement
         const range = hu.range || 1;
         for (let dy = -range; dy <= range; dy++) {
             for (let dx = -range; dx <= range; dx++) {
@@ -143,7 +154,7 @@ function render() {
                 }
             }
         }
-        // Range border on the unit's own tile
+        // Border on the unit's own tile
         const hpx = hu.gx * TILE_SIZE + GRID_OFFSET_X;
         const hpy = hu.gy * TILE_SIZE + GRID_OFFSET_Y;
         ctx.strokeStyle = hu.team === 'player' ? 'rgba(80,180,255,0.5)' : 'rgba(255,100,50,0.5)';
@@ -159,6 +170,34 @@ function render() {
             const py = t.y * TILE_SIZE + GRID_OFFSET_Y;
             ctx.fillStyle = 'rgba(50, 100, 255, 0.35)';
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
+        // Attack range preview: show where the unit could attack from the hovered move tile
+        const hoveredMove = game.moveTiles.find(t => t.x === game.cursor.x && t.y === game.cursor.y);
+        if (hoveredMove && game.selectedUnit) {
+            const unit = game.selectedUnit;
+            const range = unit.range || 1;
+            for (let dy = -range; dy <= range; dy++) {
+                for (let dx = -range; dx <= range; dx++) {
+                    const d = Math.abs(dx) + Math.abs(dy);
+                    if (d >= 1 && d <= range) {
+                        const ax = hoveredMove.x + dx, ay = hoveredMove.y + dy;
+                        if (ax >= 0 && ay >= 0 && ax < game.gridW && ay < game.gridH) {
+                            ctx.fillStyle = 'rgba(255, 80, 80, 0.22)';
+                            ctx.fillRect(ax * TILE_SIZE + GRID_OFFSET_X, ay * TILE_SIZE + GRID_OFFSET_Y, TILE_SIZE, TILE_SIZE);
+                        }
+                    }
+                }
+            }
+        }
+        // Pending move tile: highlight chosen destination distinctly
+        if (game.pendingMoveTile) {
+            const { tx, ty } = game.pendingMoveTile;
+            ctx.fillStyle = 'rgba(255, 240, 80, 0.3)';
+            ctx.fillRect(tx * TILE_SIZE + GRID_OFFSET_X, ty * TILE_SIZE + GRID_OFFSET_Y, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#ffffaa';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(tx * TILE_SIZE + GRID_OFFSET_X + 1.5, ty * TILE_SIZE + GRID_OFFSET_Y + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
+            ctx.lineWidth = 1;
         }
     }
 

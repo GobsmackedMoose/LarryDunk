@@ -167,8 +167,7 @@ const LEVELS = [
                 createUnit('minion', 0, 3, 'player'),
                 createUnit('minion', 0, 5, 'player'),
                 createUnit('guard', 6, 2, 'enemy'),
-                createUnit('guard', 8, 4, 'enemy'),
-                createUnit('guard', 9, 5, 'enemy'),
+                createUnit('guard', 8, 5, 'enemy'),
                 createUnit('cainAbel', 10, 4, 'enemy')
             ];
 
@@ -528,7 +527,6 @@ const LEVELS = [
                 createUnit('guard', 5, 2, 'enemy'),
                 createUnit('guard', 5, 6, 'enemy'),
                 createUnit('guard', 7, 4, 'enemy'),
-                createUnit('guard', 9, 2, 'enemy'),
                 createUnit('cerealLarry', 10, 4, 'enemy')  // invisible: enemy AI ignores him
             ];
             spawnSelectedLarryDunks();
@@ -597,8 +595,6 @@ const LEVELS = [
                 createUnit('guard', 5, 2, 'enemy'),
                 createUnit('guard', 5, 6, 'enemy'),
                 createUnit('robot', 7, 4, 'enemy'),
-                createUnit('robot', 10, 3, 'enemy'),
-                createUnit('guard', 10, 5, 'enemy'),
                 createUnit('investmentLarry', 12, 4, 'enemy')
             ];
             spawnSelectedLarryDunks();
@@ -735,8 +731,6 @@ const LEVELS = [
                 createUnit('enemyHaras', 10, 3, 'enemy'),
                 createUnit('guard', 7, 2, 'enemy'),
                 createUnit('guard', 7, 5, 'enemy'),
-                createUnit('robot', 9, 2, 'enemy'),
-                createUnit('robot', 9, 5, 'enemy'),
                 createUnit('larryDunk', 8, 4, 'enemy')
             ];
             spawnSelectedLarryDunks();
@@ -900,9 +894,8 @@ const LEVELS = [
             for (let y = 0; y < 12; y++) {
                 game.grid[y] = [];
                 for (let x = 0; x < 16; x++) {
-                    if (y <= 2) game.grid[y][x] = Terrain.CLOUD;
-                    else if (y <= 4) game.grid[y][x] = Terrain.TEMPLE;
-                    else game.grid[y][x] = Terrain.PLAIN;
+                    // y=0: Zeus's divine cloud row; y=1-4: temple approach; y=5+: plain battlefield
+                    game.grid[y][x] = y === 0 ? Terrain.CLOUD : y <= 4 ? Terrain.TEMPLE : Terrain.PLAIN;
                 }
             }
             game.grid[0][7] = Terrain.THRONE;
@@ -1005,8 +998,7 @@ const LEVELS = [
             for (let y = 0; y < 12; y++) {
                 game.grid[y] = [];
                 for (let x = 0; x < 16; x++) {
-                    if (y <= 2) game.grid[y][x] = Terrain.CLOUD;
-                    else game.grid[y][x] = Terrain.PLAIN;
+                    game.grid[y][x] = y === 0 ? Terrain.CLOUD : Terrain.PLAIN;
                 }
             }
             game.grid[5][15] = Terrain.PORTAL;
@@ -1065,7 +1057,8 @@ const LEVELS = [
             if (turn % 2 === 0 && turn <= 8) {
                 for (let i = 0; i < 2; i++) {
                     const sy = Math.floor(Math.random() * 8) + 2;
-                    if (!getUnitAt(15, sy)) game.units.push(createUnit('horse', 15, sy, 'enemy'));
+                    // Spawn at x=14, not x=15, so horses never block the portal tiles
+                    if (!getUnitAt(14, sy)) game.units.push(createUnit('horse', 14, sy, 'enemy'));
                 }
                 showBanner('More horses!', 1000);
             }

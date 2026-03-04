@@ -2,6 +2,25 @@
 // MAIN — game loop, screen handlers, keyboard shortcuts
 // ============================================================
 
+// LDs available at the START of each level in normal play order.
+// Indexed by level number; mrRuno and zeusLarry are never capturable.
+const LD_POOL_AT_LEVEL = [
+    [],                                                                                          // 0 Prologue
+    [],                                                                                          // 1 Tutorial
+    [],                                                                                          // 2 Cain & Abel (haven't captured yet)
+    ['cainAbel'],                                                                                // 3 British Larry
+    ['cainAbel', 'britishLarry'],                                                                // 4 Financier
+    ['cainAbel', 'britishLarry', 'financierLarry'],                                              // 5 Paraplegic
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry'],                          // 6 Axe
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry'],              // 7 Cereal
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry', 'cerealLarry'],          // 8 Investment
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry', 'cerealLarry', 'investmentLarry'],   // 9 Female
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry', 'cerealLarry', 'investmentLarry', 'femaleLarry'],   // 10 Rival Haras
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry', 'cerealLarry', 'investmentLarry', 'femaleLarry', 'larryDunk'],  // 11 Mr. Runo
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry', 'cerealLarry', 'investmentLarry', 'femaleLarry', 'larryDunk'],  // 12 Zeus (mrRuno not capturable)
+    ['cainAbel', 'britishLarry', 'financierLarry', 'paraplegicLarry', 'axeLarry', 'cerealLarry', 'investmentLarry', 'femaleLarry', 'larryDunk'],  // 13 Final (zeusLarry not capturable)
+];
+
 // ---- TITLE SCREEN ----
 document.getElementById('titleScreen').addEventListener('click', () => {
     document.getElementById('titleScreen').style.display = 'none';
@@ -30,6 +49,10 @@ function showLevelSelect() {
         btn.innerHTML = `<span class="lvl-num">${i}.</span>${lvl.name}`;
         btn.onclick = () => {
             screen.style.display = 'none';
+            // When jumping directly to a level, give the pool you'd have in normal play
+            if (LEVELS[i].ldSlots && game.capturedLarryDunks.length === 0) {
+                game.capturedLarryDunks = (LD_POOL_AT_LEVEL[i] || []).slice();
+            }
             loadLevel(i);
         };
         grid.appendChild(btn);
