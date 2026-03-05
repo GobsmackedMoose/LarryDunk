@@ -21,8 +21,8 @@ function doEnemyTurn() {
 function doEnemyAction(enemy) {
     if (!enemy.alive) return;
 
-    // Special: Mr. Runo runs toward exit in his office level
-    if (enemy.type === 'mrRuno' && game.currentLevel === 11) {
+    // Special: Mr. Runo runs toward exit in his gym level (level with runoEscape: true)
+    if (enemy.type === 'mrRuno' && LEVELS[game.currentLevel] && LEVELS[game.currentLevel].runoEscape) {
         const exitTiles = [];
         for (let gy = 0; gy < game.gridH; gy++) {
             for (let gx = 0; gx < game.gridW; gx++) {
@@ -43,11 +43,16 @@ function doEnemyAction(enemy) {
                 enemy.gy = bestTile.y;
             }
             if (enemy.gx === target.x && enemy.gy === target.y) {
-                showBanner('Mr. Runo escaped!', 2000);
-                game.phase = GamePhase.DEFEAT;
-                setTimeout(() => {
-                    document.getElementById('defeatScreen').style.display = 'flex';
-                }, 2200);
+                // Runo escaped — let the level handle it (robots catch him)
+                const lvl = LEVELS[game.currentLevel];
+                if (lvl.onRunoEscape) {
+                    game.phase = GamePhase.CUTSCENE; // pause enemy turn
+                    lvl.onRunoEscape(enemy);
+                } else {
+                    showBanner('Mr. Runo escaped!', 2000);
+                    game.phase = GamePhase.DEFEAT;
+                    setTimeout(() => { document.getElementById('defeatScreen').style.display = 'flex'; }, 2200);
+                }
                 return;
             }
         }
@@ -55,56 +60,62 @@ function doEnemyAction(enemy) {
         return;
     }
 
-    // Find closest player unit — skip invisible units (Cereal Mascot Larry)
+    // Find best move/attack target — skip invisible units (Cereal Mascot Larry)
+    // Score: wounded bonus + Haras bias + distance penalty
     const playerUnits = game.units.filter(u => u.alive && u.team === 'player' && !u.invisible);
     if (playerUnits.length === 0) return;
 
-    let closestTarget = null;
-    let closestDist = Infinity;
-    for (const pu of playerUnits) {
-        const d = getManhattan(enemy.gx, enemy.gy, pu.gx, pu.gy);
-        if (d < closestDist) { closestDist = d; closestTarget = pu; }
+    function targetScore(pu) {
+        let score = (pu.maxHp - pu.hp);                                        // wounded bonus
+        if (pu.type === 'haras') score += 20;                                   // Haras bias
+        score -= getManhattan(enemy.gx, enemy.gy, pu.gx, pu.gy) * 2;          // distance penalty
+        return score;
     }
 
-    // Attack if in range — skip invisible units (Cereal Mascot Larry)
+    let moveTarget = playerUnits[0];
+    for (const pu of playerUnits) {
+        if (targetScore(pu) > targetScore(moveTarget)) moveTarget = pu;
+    }
+
+    // Attack if in range — pick highest-scoring visible target
     const atkTiles = getAttackTiles(enemy, enemy.gx, enemy.gy);
     if (atkTiles.length > 0) {
-        let weakest = null;
+        let bestAtk = null;
         for (const at of atkTiles) {
             const t = getUnitAt(at.x, at.y);
-            if (t && !t.invisible && (!weakest || t.hp < weakest.hp)) weakest = t;
+            if (t && !t.invisible && (!bestAtk || targetScore(t) > targetScore(bestAtk))) bestAtk = t;
         }
-        if (weakest) {
-            doCombat(enemy, weakest);
+        if (bestAtk) {
+            doCombat(enemy, bestAtk);
             enemy.acted = true;
             checkVictoryDefeat();
             return;
         }
     }
 
-    // Move toward closest target
+    // Move toward best target
     if (enemy.mov > 0) {
         const moveTiles = getMovementTiles(enemy);
         let bestTile = null;
-        let bestDist2 = Infinity;
+        let bestDist = Infinity;
         for (const t of moveTiles) {
-            const d = getManhattan(t.x, t.y, closestTarget.gx, closestTarget.gy);
-            if (d < bestDist2) { bestDist2 = d; bestTile = t; }
+            const d = getManhattan(t.x, t.y, moveTarget.gx, moveTarget.gy);
+            if (d < bestDist) { bestDist = d; bestTile = t; }
         }
         if (bestTile) {
             enemy.gx = bestTile.x;
             enemy.gy = bestTile.y;
         }
 
-        // Try attack after moving
+        // Try attack after moving — pick highest-scoring visible target
         const atkTiles2 = getAttackTiles(enemy, enemy.gx, enemy.gy);
         if (atkTiles2.length > 0) {
-            let weakest = null;
+            let bestAtk2 = null;
             for (const at of atkTiles2) {
                 const t = getUnitAt(at.x, at.y);
-                if (t && !t.invisible && (!weakest || t.hp < weakest.hp)) weakest = t;
+                if (t && !t.invisible && (!bestAtk2 || targetScore(t) > targetScore(bestAtk2))) bestAtk2 = t;
             }
-            if (weakest) doCombat(enemy, weakest);
+            if (bestAtk2) doCombat(enemy, bestAtk2);
         }
     }
 

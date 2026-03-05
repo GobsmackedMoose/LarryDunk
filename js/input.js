@@ -101,6 +101,9 @@ function handleGridClick(gx, gy) {
                 checkVictoryDefeat();
             }
         } else {
+            // Clicking a friendly unit tile shouldn't cancel the attack — ignore it
+            const clickedUnit = getUnitAt(gx, gy);
+            if (clickedUnit && clickedUnit.team === 'player') return;
             finishUnitAction();
         }
     }
@@ -139,6 +142,7 @@ function moveUnit(unit, gx, gy) {
         document.getElementById('btnAttack').style.display = 'inline-block';
         document.getElementById('btnWait').style.display = 'inline-block';
     } else {
+        if (unit.type === 'paraplegicLarry') showBanner('TOO CLOSE!', 1000);
         finishUnitAction();
     }
 }

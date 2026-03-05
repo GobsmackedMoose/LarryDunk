@@ -2,8 +2,8 @@
 // LEVELS, VICTORY/DEFEAT, TURN EVENTS
 // Level index:
 //   0 Prologue  1 Tutorial  2 Cain&Abel    3 BritishLarry   4 FinancierLarry
-//   5 Paraplegic  6 Axe  7 Cereal  8 Investment  9 FemaleLarry
-//   10 RivalHaras  11 MrRuno  12 Zeus  13 Final
+//   5 Paraplegic  6 Axe  7 Cereal  8 RivalHaras  9 MrRuno
+//   10 Investment  11 FemaleLarry  12 Zeus  13 Final
 // ============================================================
 
 function checkVictoryDefeat() {
@@ -49,6 +49,27 @@ function checkTurnEvents() {
     if (level && level.turnEvent) level.turnEvent(game.turn);
 }
 
+// ---- LEVEL HELPERS ----
+function fillGrid(w, h, terrain) {
+    game.gridW = w; game.gridH = h;
+    game.grid = [];
+    for (let y = 0; y < h; y++) {
+        game.grid[y] = [];
+        for (let x = 0; x < w; x++) game.grid[y][x] = terrain;
+    }
+}
+
+function startLevel(intro) {
+    startCutscene(intro, () => {
+        game.phase = GamePhase.PLAYER_TURN;
+        showBanner('Player Phase', 1200);
+    });
+}
+
+function allEnemiesDefeated() {
+    return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
+}
+
 // ---- LEVEL DEFINITIONS ----
 const LEVELS = [
 
@@ -57,15 +78,16 @@ const LEVELS = [
         name: 'Prologue',
         setup: function() {
             document.getElementById('levelName').textContent = 'Prologue';
+            const _lab = Cinema.lab(), _dark = Cinema.dark(), _broadcast = Cinema.broadcast();
             const exposition = [
-                { speaker: 'NARRATOR', text: 'In a world not unlike our own...', color: '#aaa' },
-                { speaker: 'NARRATOR', text: 'A great guy named HARAS invented a revolutionary brain chip.', color: '#aaa' },
-                { speaker: 'HARAS', text: 'Finally. My Evil Brainchip is complete. Once implanted, I can control everyone.', color: '#88f' },
-                { speaker: 'NARRATOR', text: 'Haras distributed the chips, selling it as the newest piece of technology...but with a self destruction function in case "aliens ever come and enslave everyone."', color: '#aaa' },
-                { speaker: 'HARAS', text: 'Many people now have my chip in their brain. And soon everyone will. Even me — but mine is just a prototype. Non-brain exploding.', color: '#88f' },
-                { speaker: 'HARAS', text: 'ATTENTION, CITIZENS. You will all listen to me now. Disobey, and I will detonate your chip.', color: '#f44' },
-                { speaker: 'NARRATOR', text: 'The world trembled. But Haras\'s ambitions were far from satisfied...', color: '#aaa' },
-                { speaker: 'HARAS', text: 'I need soldiers. Powerful ones. But first — an example must be made.', color: '#88f' }
+                { speaker: 'NARRATOR', text: 'In a world not unlike our own...', color: '#aaa', drawScene: Cinema.dark([4,4,12]) },
+                { speaker: 'NARRATOR', text: 'A great guy named HARAS invented a revolutionary brain chip.', color: '#aaa', drawScene: _lab },
+                { speaker: 'HARAS', text: 'Finally. My Evil Brainchip is complete. Once implanted, I can control everyone.', color: '#88f', drawScene: _lab },
+                { speaker: 'NARRATOR', text: 'Haras distributed the chips, selling it as the newest piece of technology...but with a self destruction function in case "aliens ever come and enslave everyone."', color: '#aaa', drawScene: _lab },
+                { speaker: 'HARAS', text: 'Many people now have my chip in their brain. And soon everyone will. Even me — but mine is just a prototype. Non-brain exploding.', color: '#88f', drawScene: _lab },
+                { speaker: 'HARAS', text: 'ATTENTION, CITIZENS. You will all listen to me now. Disobey, and I will detonate your chip.', color: '#f44', drawScene: _broadcast },
+                { speaker: 'NARRATOR', text: 'The world trembled. But Haras\'s ambitions were far from satisfied...', color: '#aaa', drawScene: _dark },
+                { speaker: 'HARAS', text: 'I need soldiers. Powerful ones. But first — an example must be made.', color: '#88f', drawScene: _dark }
             ];
             startCutscene(exposition, () => { loadLevel(1); });
         }
@@ -77,12 +99,7 @@ const LEVELS = [
         gridW: 9, gridH: 7,
         objective: 'Eliminate all citizens who refused the brain chip.',
         setup: function() {
-            game.gridW = 9; game.gridH = 7;
-            game.grid = [];
-            for (let y = 0; y < 7; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 9; x++) game.grid[y][x] = Terrain.PLAIN;
-            }
+            fillGrid(9, 7, Terrain.PLAIN);
             game.grid[1][3] = Terrain.WALL;
             game.grid[5][3] = Terrain.WALL;
             game.grid[3][4] = Terrain.FOREST;
@@ -107,31 +124,30 @@ const LEVELS = [
                 { speaker: 'MINION',   text: 'And you, sir? Are you joining us?', color: '#cc0' },
                 { speaker: 'HARAS',    text: 'I\'m always in the fight. But if I fall — the mission ends. Keep me alive.', color: '#f44' }
             ];
-            startCutscene(intro, () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
+            startLevel(intro);
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Order Restored.',
         onVictory: function() {
+            const _lab = Cinema.lab(), _dark = Cinema.dark();
+            const _portal = Cinema.portal();
             const postTutorial = [
-                { speaker: 'HARAS',      text: 'Good. The message is clear.', color: '#88f' },
-                { speaker: 'NARRATOR',   text: 'Haras reviews the brain chip data. One profile catches his eye...', color: '#aaa' },
-                { speaker: 'HARAS',      text: 'Larry Dunk. Prime Minister. His brain structure is... strange.', color: '#88f' },
-                { speaker: 'HARAS',      text: 'Usually my chips can\'t control everything the person does.', color: '#88f' },
-                { speaker: 'HARAS',      text: 'But Larry Dunk\'s chip... I can control everything he does.', color: '#88f' },
-                { speaker: 'NARRATOR',   text: 'Haras sends an order to Larry Dunk\'s chip for the first time.', color: '#aaa' },
-                { speaker: 'LARRY DUNK', text: 'Wha— what\'s happening to my brain— it\'s a tremendous brain, everyone says—', color: '#f80' },
-                { speaker: 'HARAS',      text: 'Silence.', color: '#f44' },
-                { speaker: 'LARRY DUNK', text: '...', color: '#f80' },
-                { speaker: 'HARAS',      text: 'If this Larry Dunk is so useful, I could get more from other universes.', color: '#88f' },
-                { speaker: 'HARAS',      text: 'An army of Larry Dunks.', color: '#f44' },
-                { speaker: 'NARRATOR',   text: 'And so began the hunt across the multiverse.', color: '#aaa' },
-                { speaker: 'NARRATOR',   text: 'Not all Larry Dunks will surrender quietly. Some will have to be... caught.', color: '#aaa' },
-                { speaker: 'HARAS',      text: 'I\'ve prepared for that. Let\'s see how well they handle pressure.', color: '#88f' }
+                { speaker: 'HARAS',      text: 'Good. The message is clear.', color: '#88f', drawScene: _dark },
+                { speaker: 'NARRATOR',   text: 'Haras returns to his lab and reviews the brain chip telemetry. Thousands of signals. One stands out.', color: '#aaa', drawScene: _lab },
+                { speaker: 'HARAS',      text: 'Larry Dunk. Prime Minister. His brain structure is... extraordinary.', color: '#88f', drawScene: _lab },
+                { speaker: 'NARRATOR',   text: 'Most chips can nudge behavior — suggestions, impulses, mild compulsions. Haras has never seen full override before.', color: '#aaa', drawScene: _lab },
+                { speaker: 'HARAS',      text: 'With a normal person, the chip and their brain fight each other. But Larry Dunk\'s neural pathways... there\'s no resistance at all.', color: '#88f', drawScene: _lab },
+                { speaker: 'HARAS',      text: 'I can control everything he does. Every thought. Every word. Every action.', color: '#f44', drawScene: _lab },
+                { speaker: 'NARRATOR',   text: 'Haras sends a test command to Larry Dunk\'s chip. Prime Minister, mid-speech at Parliament.', color: '#aaa', drawScene: _lab },
+                { speaker: 'LARRY DUNK', text: 'Wha— what\'s happening to my brain— it\'s a tremendous brain, everyone says— the best brain—', color: '#f80', drawScene: _dark },
+                { speaker: 'HARAS',      text: 'Silence.', color: '#f44', drawScene: _dark },
+                { speaker: 'LARRY DUNK', text: '...', color: '#f80', drawScene: _dark },
+                { speaker: 'NARRATOR',   text: 'Complete. Instant. Total control. Like a puppet with no strings showing.', color: '#aaa', drawScene: _dark },
+                { speaker: 'HARAS',      text: 'The multiverse theory. If one Larry Dunk has this brain structure... others might too.', color: '#88f', drawScene: _lab },
+                { speaker: 'HARAS',      text: 'An army of Larry Dunks. Each one a perfect instrument. Each one mine.', color: '#f44', drawScene: _lab },
+                { speaker: 'NARRATOR',   text: 'And so began the hunt across the multiverse.', color: '#aaa', drawScene: _portal },
+                { speaker: 'NARRATOR',   text: 'Not all Larry Dunks will submit. Some will have to be... caught.', color: '#aaa', drawScene: _portal },
+                { speaker: 'HARAS',      text: 'I\'ve prepared for that too.', color: '#88f', drawScene: _portal }
             ];
             startCutscene(postTutorial, () => { loadLevel(2); });
         }
@@ -143,12 +159,7 @@ const LEVELS = [
         gridW: 12, gridH: 10,
         objective: 'Defeat the multiverse guards and recruit Cain & Abel Larry Dunk!',
         setup: function() {
-            game.gridW = 12; game.gridH = 10;
-            game.grid = [];
-            for (let y = 0; y < 10; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 12; x++) game.grid[y][x] = Terrain.PLAIN;
-            }
+            fillGrid(12, 10, Terrain.PLAIN);
             game.grid[1][10] = Terrain.PORTAL;
             game.grid[2][10] = Terrain.PORTAL;
             for (let y = 3; y <= 6; y++) game.grid[y][4] = Terrain.WALL;
@@ -171,27 +182,35 @@ const LEVELS = [
                 createUnit('cainAbel', 10, 4, 'enemy')
             ];
 
+            const _portal = Cinema.portal();
             const intro = [
-                { speaker: 'HARAS', text: 'The multiverse portal is open. I can sense more Larry Dunks through it. Using my powers. From my brainchip. (Buy my brainchip.)', color: '#88f' },
-                { speaker: 'HARAS', text: 'Guards are protecting the dimensional rift. Fight through them.', color: '#88f' },
-                { speaker: 'LARRY DUNK', text: 'Order recieved', color: '#f80' }
+                { speaker: 'NARRATOR', text: 'Through the multiverse portal — another universe. Another Larry Dunk.', color: '#aaa', drawScene: _portal },
+                { speaker: 'NARRATOR', text: 'This one is... different.', color: '#aaa', drawScene: _portal },
+                { speaker: 'CAIN', text: 'Abel. Are you ready?', color: '#e90' },
+                { speaker: 'ABEL', text: 'I am always ready. I am attached to you.', color: '#e90' },
+                { speaker: 'CAIN', text: 'Good. The guards are in position. When the enemy comes through, we hold the rift.', color: '#e90' },
+                { speaker: 'GUARD', text: 'Sir — both of you, sir — what do we do with the horses after?', color: '#bbb' },
+                { speaker: 'ABEL', text: 'We only need one horse.', color: '#e90' },
+                { speaker: 'CAIN', text: 'Exactly one.', color: '#e90' },
+                { speaker: 'GUARD', text: '...which one?', color: '#bbb' },
+                { speaker: 'CAIN & ABEL', text: 'We haven\'t decided yet. Prepare yourselves.', color: '#e90' },
+                { speaker: 'HARAS', text: 'The multiverse portal is open. Guards are protecting the dimensional rift. Fight through them.', color: '#88f' },
+                { speaker: 'LARRY DUNK', text: 'Order received.', color: '#f80' }
             ];
 
-            startCutscene(intro, () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
+            startLevel(intro);
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Portal Secured!',
         onVictory: function() {
             const meetCainAbel = [
-                { speaker: 'NARRATOR', text: 'Through the portal steps a bizarre sight — a conjoined twin Larry Dunk.', color: '#aaa' },
-                { speaker: 'CAIN & ABEL', text: 'We only need one horse.', color: '#e90' },
-                { speaker: 'HARAS', text: 'Ah yes, you\'re conjoined after all, but you won\'t need any horses soon because you\'re part of my army now', color: '#88f' },
-                { speaker: 'HARAS', text: 'Another universe. Another collection. Let\'s go. I\'m so great. Which is why you (yes you) should buy my brain chip', color: '#88f' }
+                { speaker: 'CAIN', text: 'Our guards are... gone.', color: '#e90' },
+                { speaker: 'ABEL', text: 'We are outnumbered. We have lost.', color: '#e90' },
+                { speaker: 'CAIN & ABEL', text: 'We still only need one horse.', color: '#e90' },
+                { speaker: 'HARAS', text: 'You\'re conjoined. You won\'t need any horses. You\'re part of my army now.', color: '#88f' },
+                { speaker: 'ABEL', text: '...yes... master...', color: '#e90' },
+                { speaker: 'CAIN', text: '...yes... also master...', color: '#e90' },
+                { speaker: 'HARAS', text: 'Another universe. Another collection. Let\'s go.', color: '#88f' }
             ];
             startCutscene(meetCainAbel, () => { loadLevel(3); });
         }
@@ -202,14 +221,9 @@ const LEVELS = [
         name: 'Ch.2: The Parliament Gambit',
         gridW: 14, gridH: 10,
         objective: 'Fight through Parliament\'s guard corps and capture British Larry Dunk.',
-        ldSlots: [[0,3],[0,5]],
+        ldSlots: [[0,3],[0,5],[0,7]],
         setup: function() {
-            game.gridW = 14; game.gridH = 10;
-            game.grid = [];
-            for (let y = 0; y < 10; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 14; x++) game.grid[y][x] = Terrain.PLAIN;
-            }
+            fillGrid(14, 10, Terrain.PLAIN);
             // Chamber walls (top and bottom corridors)
             for (let x = 0; x < 14; x++) {
                 game.grid[0][x] = Terrain.WALL;
@@ -234,6 +248,8 @@ const LEVELS = [
                 // Guards defending parliament
                 createUnit('guard', 5, 2, 'enemy'),
                 createUnit('guard', 8, 5, 'enemy'),
+                createUnit('guard', 10, 2, 'enemy'),
+                createUnit('robot', 7, 7, 'enemy'),
                 // British Larry — the boss (enemy, triggers Tetris when defeated)
                 createUnit('britishLarry', 12, 4, 'enemy')
             ];
@@ -247,14 +263,9 @@ const LEVELS = [
                 { speaker: 'BRITISH LARRY DUNK', text: 'Guards — at once!', color: '#f80' }
             ];
 
-            startCutscene(intro, () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
+            startLevel(intro);
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Parliament Falls!',
         onVictory: function() {
             const postBritish = [
@@ -274,7 +285,7 @@ const LEVELS = [
         name: 'Ch.2.5: The Island',
         gridW: 12, gridH: 9,
         objective: 'Secure the island. Search the ruins — something is hidden here.',
-        ldSlots: [[1,5],[2,3]],
+        ldSlots: [[1,5],[2,3],[2,6]],
         setup: function() {
             game.gridW = 12; game.gridH = 9;
             game.financierRevealed = false;
@@ -308,7 +319,8 @@ const LEVELS = [
                 // Island security — small patrol
                 createUnit('guard', 5, 2, 'enemy'),
                 createUnit('guard', 8, 5, 'enemy'),
-                createUnit('guard', 5, 6, 'enemy')
+                createUnit('guard', 5, 6, 'enemy'),
+                createUnit('robot', 8, 2, 'enemy')
             ];
             spawnSelectedLarryDunks();
 
@@ -319,14 +331,9 @@ const LEVELS = [
                 { speaker: 'NARRATOR', text: 'The ancient throne in the interior pulses with a faint signal. Someone rests there.', color: '#555' }
             ];
 
-            startCutscene(intro, () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
+            startLevel(intro);
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Island Secured!',
         turnEvent: function(_turn) {
             if (!game.financierRevealed) {
@@ -378,14 +385,9 @@ const LEVELS = [
         name: 'Ch.3: Eye Bullets',
         gridW: 12, gridH: 8,
         objective: 'Fight through rooftop security and capture Paraplegic Superhero Larry Dunk!',
-        ldSlots: [[1,5],[0,2]],
+        ldSlots: [[1,5],[0,2],[1,6]],
         setup: function() {
-            game.gridW = 12; game.gridH = 8;
-            game.grid = [];
-            for (let y = 0; y < 8; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 12; x++) game.grid[y][x] = Terrain.PLAIN;
-            }
+            fillGrid(12, 8, Terrain.PLAIN);
             // Rooftop parapet wall (top + bottom border)
             for (let x = 0; x < 12; x++) { game.grid[0][x] = Terrain.WALL; game.grid[7][x] = Terrain.WALL; }
             // CLOUD patches — sky visible through gaps in the parapet
@@ -405,6 +407,7 @@ const LEVELS = [
                 createUnit('guard', 7, 3, 'enemy'),
                 createUnit('robot', 7, 5, 'enemy'),
                 createUnit('robot', 9, 4, 'enemy'),
+                createUnit('robot', 6, 2, 'enemy'),
                 createUnit('paraplegicLarry', 10, 3, 'enemy')
             ];
             spawnSelectedLarryDunks();
@@ -420,9 +423,7 @@ const LEVELS = [
                 showBanner('Player Phase', 1200);
             });
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Super Larry Captured!',
         onVictory: function() {
             startCutscene([
@@ -438,14 +439,9 @@ const LEVELS = [
         name: 'Ch.3.2: The Slaughterhouse',
         gridW: 12, gridH: 8,
         objective: 'Neutralize the axe murderer. Careful — he chain attacks after kills.',
-        ldSlots: [[0,5],[2,2]],
+        ldSlots: [[0,5],[2,2],[1,6],[0,2]],
         setup: function() {
-            game.gridW = 12; game.gridH = 8;
-            game.grid = [];
-            for (let y = 0; y < 8; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 12; x++) game.grid[y][x] = Terrain.PLAIN;
-            }
+            fillGrid(12, 8, Terrain.PLAIN);
             // Warehouse crates
             game.grid[1][4] = Terrain.FOREST; game.grid[1][5] = Terrain.FOREST;
             game.grid[6][3] = Terrain.FOREST; game.grid[6][7] = Terrain.FOREST;
@@ -462,6 +458,8 @@ const LEVELS = [
                 createUnit('guard', 5, 6, 'enemy'),
                 createUnit('guard', 7, 3, 'enemy'),
                 createUnit('guard', 6, 5, 'enemy'),
+                createUnit('robot', 7, 1, 'enemy'),
+                createUnit('guard', 4, 6, 'enemy'),
                 createUnit('axeLarry', 9, 3, 'enemy')
             ];
             spawnSelectedLarryDunks();
@@ -480,9 +478,7 @@ const LEVELS = [
                 showBanner('Player Phase', 1200);
             });
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Axe Murderer Chipped!',
         onVictory: function() {
             startCutscene([
@@ -499,14 +495,9 @@ const LEVELS = [
         name: 'Ch.3.3: Part of a Complete Breakfast',
         gridW: 12, gridH: 9,
         objective: 'Find and capture the Cereal Mascot Larry Dunk — enemy units can\'t see him, but you can.',
-        ldSlots: [[0,3],[2,3]],
+        ldSlots: [[0,3],[2,3],[0,6]],
         setup: function() {
-            game.gridW = 12; game.gridH = 9;
-            game.grid = [];
-            for (let y = 0; y < 9; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 12; x++) game.grid[y][x] = Terrain.TEMPLE;
-            }
+            fillGrid(12, 9, Terrain.TEMPLE);
             // TV studio props / set pieces
             game.grid[2][3] = Terrain.FOREST; game.grid[2][4] = Terrain.FOREST;
             game.grid[6][7] = Terrain.FOREST; game.grid[6][8] = Terrain.FOREST;
@@ -521,6 +512,8 @@ const LEVELS = [
                 createUnit('guard', 5, 2, 'enemy'),
                 createUnit('guard', 5, 6, 'enemy'),
                 createUnit('guard', 7, 4, 'enemy'),
+                createUnit('robot', 8, 3, 'enemy'),
+                createUnit('guard', 9, 6, 'enemy'),
                 createUnit('cerealLarry', 10, 4, 'enemy')  // invisible: enemy AI ignores him
             ];
             spawnSelectedLarryDunks();
@@ -538,26 +531,218 @@ const LEVELS = [
                 showBanner('Player Phase', 1200);
             });
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Mascot Acquired!',
         onVictory: function() {
             startCutscene([
                 { speaker: 'CEREAL LARRY', text: 'Oh! A new friend! Would you like some LARRY DUNK\'S CRISPY BITES?', color: '#f80' },
                 { speaker: 'HARAS', text: 'I\'m putting a chip in your brain.', color: '#88f' },
                 { speaker: 'CEREAL LARRY', text: '...okay! *poses*', color: '#f80' },
-                { speaker: 'HARAS', text: 'His invisibility will be... useful. Next: an investment group. Corporate.', color: '#88f' }
+                { speaker: 'HARAS', text: 'His invisibility will be... useful. Next: someone\'s blocking the portal. Another Haras.', color: '#88f' }
             ], () => { loadLevel(8); });
         }
     },
 
-    // 8: Ch.3.4 — Investment Group Larry Dunk
+    // 8: Ch.3.7 — Rival Haras Encounter
+    {
+        name: 'Ch.3.7: The Other Me',
+        gridW: 12, gridH: 8,
+        objective: 'Defeat the rival Haras blocking your path to Mr. Runo.',
+        ldSlots: [[1,5],[1,2],[0,6],[0,3]],
+        setup: function() {
+            game.gridW = 12; game.gridH = 8;
+            game.grid = [];
+            for (let y = 0; y < 8; y++) {
+                game.grid[y] = [];
+                for (let x = 0; x < 12; x++) {
+                    if (y <= 1) game.grid[y][x] = Terrain.CLOUD;
+                    else game.grid[y][x] = Terrain.PLAIN;
+                }
+            }
+            // Portal tiles — interdimensional crossroads
+            game.grid[2][0]  = Terrain.PORTAL; game.grid[5][0]  = Terrain.PORTAL;
+            game.grid[2][11] = Terrain.PORTAL; game.grid[5][11] = Terrain.PORTAL;
+            // Terrain hazards
+            game.grid[3][4] = Terrain.WALL; game.grid[3][5] = Terrain.WALL;
+            game.grid[4][7] = Terrain.WALL; game.grid[4][8] = Terrain.WALL;
+            game.grid[1][6] = Terrain.FOREST; game.grid[6][3] = Terrain.FOREST;
+            game.grid[6][9] = Terrain.FOREST;
+
+            game.units = [
+                createUnit('haras', 0, 3, 'player'),
+                createUnit('larryDunk', 0, 4, 'player'),
+                createUnit('minion', 1, 3, 'player'),
+                createUnit('enemyHaras', 10, 3, 'enemy'),
+                createUnit('guard', 7, 2, 'enemy'),
+                createUnit('guard', 7, 5, 'enemy'),
+                createUnit('robot', 9, 2, 'enemy'),
+                createUnit('guard', 5, 6, 'enemy'),
+                createUnit('larryDunk', 8, 4, 'enemy')
+            ];
+            spawnSelectedLarryDunks();
+
+            startCutscene([
+                { speaker: 'NARRATOR', text: 'An interdimensional crossroads. The portal to Mr. Runo\'s universe is blocked.', color: '#aaa' },
+                { speaker: 'RIVAL HARAS', text: 'So. The one they\'re all talking about.', color: '#a88' },
+                { speaker: 'HARAS', text: '...', color: '#88f' },
+                { speaker: 'RIVAL HARAS', text: 'I\'ve collected 7 Larry Dunks. Chipped and controlled. How many have you got?', color: '#a88' },
+                { speaker: 'HARAS', text: 'More than you.', color: '#88f' },
+                { speaker: 'RIVAL HARAS', text: 'I\'ve been watching your robot routing. You do something different. Where did you learn that?', color: '#a88' },
+                { speaker: 'HARAS', text: 'A man who died of old age. In this universe.', color: '#88f' },
+                { speaker: 'RIVAL HARAS', text: 'You\'re blocking my path to Runo. I won\'t let you take him.', color: '#a88' },
+                { speaker: 'HARAS', text: 'You already lost. You just don\'t know it yet.', color: '#f44' },
+                { speaker: 'CAIN & ABEL', text: 'There are two of him now. This is concerning. We only need one Haras.', color: '#e90' }
+            ], () => {
+                game.phase = GamePhase.PLAYER_TURN;
+                showBanner('Player Phase', 1200);
+            });
+        },
+        victoryCheck: allEnemiesDefeated,
+        victoryText: 'Rival Defeated!',
+        onVictory: function() {
+            startCutscene([
+                { speaker: 'RIVAL HARAS', text: '...how. I had the same chips. The same plan. The same face.', color: '#a88' },
+                { speaker: 'HARAS', text: 'I\'m simply better.', color: '#88f' },
+                { speaker: 'NARRATOR', text: 'The portal opens. Mr. Runo\'s universe is accessible.', color: '#aaa' },
+                { speaker: 'CAIN & ABEL', text: 'He said "same face." That was accurate. We verified.', color: '#e90' },
+                { speaker: 'HARAS', text: 'Move out.', color: '#88f' }
+            ], () => { loadLevel(9); });
+        }
+    },
+
+    // 9: Ch.4 — Catch Mr. Runo!
+    {
+        name: 'Ch.4: Catch Mr. Runo!',
+        gridW: 14, gridH: 10,
+        objective: 'Stop Mr. Runo before he escapes through the exit!',
+        runoEscape: true,
+        ldSlots: [[2,7],[0,4],[3,4]],
+        setup: function() {
+            fillGrid(14, 10, Terrain.GYM_FLOOR);
+            game.grid[1][3] = Terrain.EQUIPMENT;
+            game.grid[1][4] = Terrain.EQUIPMENT;
+            game.grid[3][6] = Terrain.EQUIPMENT;
+            game.grid[3][7] = Terrain.EQUIPMENT;
+            game.grid[5][2] = Terrain.EQUIPMENT;
+            game.grid[5][10] = Terrain.EQUIPMENT;
+            game.grid[7][5] = Terrain.EQUIPMENT;
+            game.grid[7][8] = Terrain.EQUIPMENT;
+            for (let x = 0; x < 14; x++) { game.grid[0][x] = Terrain.WALL; game.grid[9][x] = Terrain.WALL; }
+            for (let y = 0; y < 10; y++) game.grid[y][0] = Terrain.WALL;
+            // Barrier wall at x=10 — forces Runo through the EQUIPMENT gap at y=5
+            for (let y = 1; y <= 8; y++) game.grid[y][10] = Terrain.WALL;
+            game.grid[5][10] = Terrain.EQUIPMENT; // restore the gap (overwrite the wall loop above)
+            game.grid[4][13] = Terrain.EXIT;
+            game.grid[5][13] = Terrain.EXIT;
+
+            const intro = [
+                { speaker: 'NARRATOR', text: 'The team arrives at Mr. Runo\'s office.', color: '#aaa' },
+                { speaker: 'HARAS', text: 'There he is.', color: '#88f' },
+                { speaker: 'NARRATOR', text: 'Haras stares at Mr. Runo\'s face for a long moment.', color: '#aaa' },
+                { speaker: 'HARAS', text: '...', color: '#88f' },
+                { speaker: 'HARAS', text: 'You left me with Dr. Retina. You ABANDONED me.', color: '#f44' },
+                { speaker: 'MR. RUNO', text: 'Son, I—', color: '#2a2' },
+                { speaker: 'HARAS', text: 'SURROUND HIM.', color: '#f44' }
+            ];
+
+            game.units = [
+                createUnit('haras', 1, 4, 'player'),
+                createUnit('larryDunk', 1, 5, 'player'),
+                createUnit('minion', 1, 2, 'player'),
+                createUnit('minion', 2, 8, 'player'),
+                createUnit('mrRuno', 7, 5, 'enemy'),
+                createUnit('guard', 5, 3, 'enemy'),   // blocking the corridor
+                createUnit('guard', 5, 7, 'enemy')    // blocking the corridor
+            ];
+            spawnSelectedLarryDunks();
+
+            startLevel(intro);
+        },
+        victoryCheck: function() {
+            return false; // Only onRunoEscape can trigger victory — player can never "catch" Runo
+        },
+        victoryText: 'Mr. Runo Cornered!',
+        onRunoEscape: function(runoUnit) {
+            runoUnit.alive = false;
+            game.phase = GamePhase.CUTSCENE; // freeze everything
+            showBanner('RUNO ESCAPED!', 1600);
+            setTimeout(() => {
+                startCutscene([
+                    { speaker: 'HARAS', text: '...', color: '#88f' },
+                    { speaker: 'MR. RUNO', text: '*running* You\'ll never hold me, Haras. Your robots can\'t—', color: '#2a2' },
+                    { speaker: 'ROBOT', text: '[UNIT: RUNO_M — INTERCEPTED — CORRIDOR 4B]', color: '#8af' },
+                    { speaker: 'MR. RUNO', text: '...', color: '#2a2' },
+                    { speaker: 'NARRATOR', text: 'The robots weren\'t deployed to catch Runo in the gym. They were sent through the building\'s other exit — to meet him on the other side.', color: '#aaa' },
+                    { speaker: 'MR. RUNO', text: 'You... sent them ahead. Before the fight even started.', color: '#2a2' },
+                    { speaker: 'HARAS', text: 'Dr. Retina taught me: routing logic. Efficiency is everything.', color: '#88f' },
+                    { speaker: 'ROBOT', text: '[CONTAINMENT ACTIVE — AWAITING ORDERS]', color: '#8af' },
+                    { speaker: 'MR. RUNO', text: '...clever. I\'ll give you that, son.', color: '#2a2' },
+                    { speaker: 'HARAS', text: 'Don\'t call me that.', color: '#f44' }
+                ], () => {
+                    game.phase = GamePhase.VICTORY;
+                    playSound('victory');
+                    setTimeout(() => { document.getElementById('victoryScreen').style.display = 'flex'; }, 600);
+                });
+            }, 1800);
+        },
+        turnEvent: function(turn) {
+            if (turn === 3) {
+                const _fb = Cinema.flashback();
+                startCutscene([
+                    { speaker: 'NARRATOR', text: '~~ FLASHBACK ~~', color: '#a87040', drawScene: _fb },
+                    { speaker: 'DR. RETINA', text: 'Again. From the beginning.', color: '#c8b090', drawScene: _fb },
+                    { speaker: 'YOUNG HARAS', text: 'I\'ve done this seventeen times today—', color: '#b0b0ee', drawScene: _fb },
+                    { speaker: 'DR. RETINA', text: 'Then do it an eighteenth.', color: '#c8b090', drawScene: _fb },
+                    { speaker: 'NARRATOR', text: 'For six months, Dr. Retina assigned Haras a single task: use "pi-hub" to download digits of pi. Increasingly large counts. Every day.', color: '#a87040', drawScene: _fb },
+                    { speaker: 'YOUNG HARAS', text: '*staring at the screen* ...3.14159265358979... I\'ve memorized eleven million of these.', color: '#b0b0ee', drawScene: _fb },
+                    { speaker: 'YOUNG HARAS', text: 'There has to be something better to do with this much patience.', color: '#b0b0ee', drawScene: _fb },
+                    { speaker: 'NARRATOR', text: 'That was the moment in this universe. Here, the evil empire was born from boredom and pi.', color: '#a87040', drawScene: _fb },
+                    { speaker: 'DR. RETINA', text: 'Now — the robots. Watch how I direct them. Efficiency is everything.', color: '#c8b090', drawScene: _fb },
+                    { speaker: 'YOUNG HARAS', text: '*scribbling notes* Routing logic... parallel command threads... I can do this better than you.', color: '#b0b0ee', drawScene: _fb },
+                    { speaker: 'NARRATOR', text: 'Dr. Retina died shortly after. Old age. Peacefully.', color: '#a87040', drawScene: _fb },
+                    { speaker: 'NARRATOR', text: 'In this universe, at least.', color: '#a87040', drawScene: _fb },
+                    { speaker: 'NARRATOR', text: '~~ END FLASHBACK ~~', color: '#a87040', drawScene: _fb },
+                    { speaker: 'CAIN & ABEL', text: 'We met Dr. Retina once. He could not decide which of us to address. Neither could we.', color: '#e90' },
+                    { speaker: 'HARAS', text: 'He taught me everything. My father just... left. But I learned to plan ahead.', color: '#88f' },
+                    { speaker: 'HARAS', text: 'Deploy the robots. Send them through the service entrance.', color: '#f44' }
+                ], () => {
+                    // Robots appear — player assumes they'll help catch Runo in the gym
+                    // (they're actually sent ahead to intercept at the exit)
+                    game.units.push(createUnit('robot', 1, 1, 'player'));
+                    game.units.push(createUnit('robot', 1, 8, 'player'));
+                    game.phase = GamePhase.PLAYER_TURN;
+                    showBanner('Robots Deployed!', 1500);
+                });
+            }
+            // No turn limit defeat — robots will catch Runo when he escapes
+        },
+        onVictory: function() {
+            const postCapture = [
+                { speaker: 'MR. RUNO', text: '*panting* ...you got me.', color: '#2a2' },
+                { speaker: 'HARAS', text: 'Your biceps are too strong for the chip. But I don\'t need your brain.', color: '#88f' },
+                { speaker: 'MR. RUNO', text: 'Son — I had reasons—', color: '#2a2' },
+                { speaker: 'HARAS', text: 'Don\'t.', color: '#f44' },
+                { speaker: 'HARAS', text: '...', color: '#88f' },
+                { speaker: 'MR. RUNO', text: 'You needed the pressure. Needed to be hungry.', color: '#2a2' },
+                { speaker: 'HARAS', text: 'Don\'t make excuses', color: '#f44' },
+                { speaker: 'MR. RUNO', text: 'I\'m not. I\'m simply explaining myself.', color: '#2a2' },
+                { speaker: 'NARRATOR', text: 'Haras restrains Mr. Runo using the robots. Then stares at the time machine for a long moment.', color: '#aaa' },
+                { speaker: 'HARAS', text: 'I could go back. Stop him from leaving.', color: '#88f' },
+                { speaker: 'HARAS', text: '...I\'m doing it. With my time machine.', color: '#f44' },
+                { speaker: 'NARRATOR', text: 'The timeline shifts. Mr. Runo never left. Haras was never alone.', color: '#aaa' },
+                { speaker: 'NARRATOR', text: 'But something is different now.', color: '#aaa' },
+                { speaker: 'HARAS', text: 'It doesn\'t matter. I still have targets. And then — Zeus.', color: '#88f' }
+            ];
+            startCutscene(postCapture, () => { loadLevel(10); });
+        }
+    },
+
+    // 10: Ch.3.4 — Investment Group Larry Dunk
     {
         name: 'Ch.3.4: Q4 Acquisition',
         gridW: 14, gridH: 9,
         objective: 'Break into the boardroom and capture Investment Group Larry Dunk.',
-        ldSlots: [[0,5],[2,4]],
+        ldSlots: [[0,5],[2,6],[0,8],[1,8]],
         setup: function() {
             game.gridW = 14; game.gridH = 9;
             game.grid = [];
@@ -591,14 +776,17 @@ const LEVELS = [
                 createUnit('larryDunk', 0, 7, 'player'),
                 createUnit('minion', 1, 6, 'player'),
                 createUnit('guard', 6, 6, 'enemy'),        // lower floor — guards left stairway
+                createUnit('guard', 10, 7, 'enemy'),       // lower floor — guards right stairway
                 createUnit('guard', 3, 2, 'enemy'),        // upper floor — boardroom left
                 createUnit('robot', 8, 2, 'enemy'),        // upper floor — boardroom center
+                createUnit('robot', 5, 1, 'enemy'),        // upper floor — near left stair
                 createUnit('investmentLarry', 12, 1, 'enemy')  // upper floor — at conference table
             ];
             spawnSelectedLarryDunks();
 
             startCutscene([
                 { speaker: 'NARRATOR', text: 'The boardroom of Larry Dunk Acquisitions LLC. Fifteenth floor.', color: '#aaa' },
+                { speaker: 'NARRATOR', text: 'Haras has been quieter since the Runo situation. The team does not ask.', color: '#555' },
                 { speaker: 'INVESTMENT LARRY', text: 'I\'ve been expecting a hostile takeover. I did not expect... this.', color: '#f80' },
                 { speaker: 'HARAS', text: 'I want your brain. Literally.', color: '#88f' },
                 { speaker: 'INVESTMENT LARRY', text: 'My legal team will— actually, before we proceed: are you familiar with our Ad Break restructuring package?', color: '#f80' },
@@ -610,9 +798,7 @@ const LEVELS = [
                 showBanner('Player Phase', 1200);
             });
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Hostile Takeover Complete!',
         onVictory: function() {
             startCutscene([
@@ -620,25 +806,19 @@ const LEVELS = [
                 { speaker: 'HARAS', text: 'Chip installed. Welcome to the portfolio.', color: '#88f' },
                 { speaker: 'NARRATOR', text: 'His Ad Break ability remains active. The chip did not disable the ad.', color: '#aaa' },
                 { speaker: 'CAIN & ABEL', text: 'That advertisement was twenty-two seconds. We counted. We had time.', color: '#e90' },
-                { speaker: 'HARAS', text: 'Next signal: Female Larry Dunk. Shopping mall. Reports conflict on exact location.', color: '#88f' },
-                { speaker: 'NARRATOR', text: 'A rival Haras has intercepted the same signal. But he\'s not as fast as you so it doesn\'t matter..', color: '#555' }
-            ], () => { loadLevel(9); });
+                { speaker: 'HARAS', text: 'Next signal: Female Larry Dunk. Shopping mall. Reports conflict on exact location.', color: '#88f' }
+            ], () => { loadLevel(11); });
         }
     },
 
-    // 9: Ch.3.6 — Female Larry Dunk
+    // 11: Ch.3.6 — Female Larry Dunk
     {
         name: 'Ch.3.6: Wrong Turn',
         gridW: 12, gridH: 8,
         objective: 'Corner Female Larry Dunk — her movement is unpredictable. Watch out.',
-        ldSlots: [[0,4],[2,3]],
+        ldSlots: [[0,4],[2,3],[0,6],[2,5]],
         setup: function() {
-            game.gridW = 12; game.gridH = 8;
-            game.grid = [];
-            for (let y = 0; y < 8; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 12; x++) game.grid[y][x] = Terrain.TEMPLE;
-            }
+            fillGrid(12, 8, Terrain.TEMPLE);
             // Mall layout — fountain (WATER centerpiece), shops (GYM_FLOOR), planters (FOREST), storefronts (WALL)
             game.grid[3][5] = Terrain.WATER; game.grid[4][5] = Terrain.WATER;
             game.grid[3][6] = Terrain.WATER; game.grid[4][6] = Terrain.WATER;
@@ -664,6 +844,8 @@ const LEVELS = [
                 createUnit('guard', 4, 5, 'enemy'),
                 createUnit('robot', 7, 3, 'enemy'),
                 createUnit('robot', 9, 5, 'enemy'),
+                createUnit('guard', 3, 5, 'enemy'),
+                createUnit('robot', 8, 2, 'enemy'),
                 createUnit('femaleLarry', 9, 3, 'enemy')
             ];
             spawnSelectedLarryDunks();
@@ -680,204 +862,18 @@ const LEVELS = [
                 showBanner('Player Phase', 1200);
             });
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Parking Validated!',
         onVictory: function() {
             startCutscene([
                 { speaker: 'FEMALE LARRY', text: '...that was... a calculated maneuver. I meant to be here.', color: '#f80' },
                 { speaker: 'HARAS', text: 'Chip installed. Your bad driving is now my bad driving.', color: '#88f' },
                 { speaker: 'FEMALE LARRY', text: '...yes... master... *parks slightly crooked*', color: '#f80' },
-                { speaker: 'NARRATOR', text: 'The collection is nearly complete. One target remains before the Runo situation.', color: '#aaa' },
-                { speaker: 'HARAS', text: 'Mr. Runo. The last one. And the hardest.', color: '#88f' },
-                { speaker: 'NARRATOR', text: 'Haras opens the portal to Runo\'s universe. Something blocks it.', color: '#555' },
-                { speaker: 'HARAS', text: '...Someone\'s already here.', color: '#f44' }
-            ], () => { loadLevel(10); });
-        }
-    },
-
-    // 10: Ch.3.7 — Rival Haras Encounter
-    {
-        name: 'Ch.3.7: The Other Me',
-        gridW: 12, gridH: 8,
-        objective: 'Defeat the rival Haras blocking your path to Mr. Runo.',
-        ldSlots: [[1,5],[1,2]],
-        setup: function() {
-            game.gridW = 12; game.gridH = 8;
-            game.grid = [];
-            for (let y = 0; y < 8; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 12; x++) {
-                    if (y <= 1) game.grid[y][x] = Terrain.CLOUD;
-                    else game.grid[y][x] = Terrain.PLAIN;
-                }
-            }
-            // Portal tiles — interdimensional crossroads
-            game.grid[2][0]  = Terrain.PORTAL; game.grid[5][0]  = Terrain.PORTAL;
-            game.grid[2][11] = Terrain.PORTAL; game.grid[5][11] = Terrain.PORTAL;
-            // Terrain hazards
-            game.grid[3][4] = Terrain.WALL; game.grid[3][5] = Terrain.WALL;
-            game.grid[4][7] = Terrain.WALL; game.grid[4][8] = Terrain.WALL;
-            game.grid[1][6] = Terrain.FOREST; game.grid[6][3] = Terrain.FOREST;
-            game.grid[6][9] = Terrain.FOREST;
-
-            game.units = [
-                createUnit('haras', 0, 3, 'player'),
-                createUnit('larryDunk', 0, 4, 'player'),
-                createUnit('minion', 1, 3, 'player'),
-                createUnit('enemyHaras', 10, 3, 'enemy'),
-                createUnit('guard', 7, 2, 'enemy'),
-                createUnit('guard', 7, 5, 'enemy'),
-                createUnit('larryDunk', 8, 4, 'enemy')
-            ];
-            spawnSelectedLarryDunks();
-
-            startCutscene([
-                { speaker: 'NARRATOR', text: 'An interdimensional crossroads. The portal to Mr. Runo\'s universe is blocked.', color: '#aaa' },
-                { speaker: 'RIVAL HARAS', text: 'So. The one they\'re all talking about.', color: '#a88' },
-                { speaker: 'HARAS', text: '...', color: '#88f' },
-                { speaker: 'RIVAL HARAS', text: 'I\'ve collected 7 Larry Dunks. Chipped and controlled. How many have you got?', color: '#a88' },
-                { speaker: 'HARAS', text: 'More than you.', color: '#88f' },
-                { speaker: 'RIVAL HARAS', text: 'I\'ve been watching your robot routing. You do something different. Where did you learn that?', color: '#a88' },
-                { speaker: 'HARAS', text: 'A man who died of old age. In this universe.', color: '#88f' },
-                { speaker: 'RIVAL HARAS', text: 'You\'re blocking my path to Runo. I won\'t let you take him.', color: '#a88' },
-                { speaker: 'HARAS', text: 'You already lost. You just don\'t know it yet.', color: '#f44' },
-                { speaker: 'CAIN & ABEL', text: 'There are two of him now. This is concerning. We only need one Haras.', color: '#e90' }
-            ], () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
-        },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
-        victoryText: 'Rival Defeated!',
-        onVictory: function() {
-            startCutscene([
-                { speaker: 'RIVAL HARAS', text: '...how. I had the same chips. The same plan. The same face.', color: '#a88' },
-                { speaker: 'HARAS', text: 'I\'m simply better.', color: '#88f' },
-                { speaker: 'NARRATOR', text: 'The portal opens. Mr. Runo\'s universe is accessible.', color: '#aaa' },
-                { speaker: 'CAIN & ABEL', text: 'He said "same face." That was accurate. We verified.', color: '#e90' },
-                { speaker: 'HARAS', text: 'Move out.', color: '#88f' }
-            ], () => { loadLevel(11); });
-        }
-    },
-
-    // 11: Ch.4 — Catch Mr. Runo!
-    {
-        name: 'Ch.4: Catch Mr. Runo!',
-        gridW: 14, gridH: 10,
-        objective: 'Stop Mr. Runo before he escapes through the exit! (10 turn limit)',
-        ldSlots: [[2,7]],
-        setup: function() {
-            game.gridW = 14; game.gridH = 10;
-            game.grid = [];
-            for (let y = 0; y < 10; y++) {
-                game.grid[y] = [];
-                for (let x = 0; x < 14; x++) game.grid[y][x] = Terrain.GYM_FLOOR;
-            }
-            game.grid[1][3] = Terrain.EQUIPMENT;
-            game.grid[1][4] = Terrain.EQUIPMENT;
-            game.grid[3][6] = Terrain.EQUIPMENT;
-            game.grid[3][7] = Terrain.EQUIPMENT;
-            game.grid[5][2] = Terrain.EQUIPMENT;
-            game.grid[5][10] = Terrain.EQUIPMENT;
-            game.grid[7][5] = Terrain.EQUIPMENT;
-            game.grid[7][8] = Terrain.EQUIPMENT;
-            for (let x = 0; x < 14; x++) { game.grid[0][x] = Terrain.WALL; game.grid[9][x] = Terrain.WALL; }
-            for (let y = 0; y < 10; y++) game.grid[y][0] = Terrain.WALL;
-            // Barrier wall at x=10 — forces Runo through the EQUIPMENT gap at y=5
-            for (let y = 1; y <= 8; y++) game.grid[y][10] = Terrain.WALL;
-            game.grid[5][10] = Terrain.EQUIPMENT; // restore the gap (overwrite the wall loop above)
-            game.grid[4][13] = Terrain.EXIT;
-            game.grid[5][13] = Terrain.EXIT;
-
-            const intro = [
-                { speaker: 'NARRATOR', text: 'The team arrives at Mr. Runo\'s office.', color: '#aaa' },
-                { speaker: 'HARAS', text: 'There he is.', color: '#88f' },
-                { speaker: 'NARRATOR', text: 'Haras stares at Mr. Runo\'s face for a long moment.', color: '#aaa' },
-                { speaker: 'HARAS', text: '...', color: '#88f' },
-                { speaker: 'HARAS', text: 'You left me with Dr. Retina. You ABANDONED me.', color: '#f44' },
-                { speaker: 'MR. RUNO', text: 'Son, I—', color: '#2a2' },
-                { speaker: 'HARAS', text: 'SURROUND HIM.', color: '#f44' }
-            ];
-
-            game.units = [
-                createUnit('haras', 1, 4, 'player'),
-                createUnit('larryDunk', 1, 5, 'player'),
-                createUnit('minion', 1, 2, 'player'),
-                createUnit('minion', 2, 8, 'player'),
-                createUnit('mrRuno', 7, 5, 'enemy')
-            ];
-            spawnSelectedLarryDunks();
-
-            startCutscene(intro, () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
-        },
-        victoryCheck: function() {
-            const mrR = game.units.find(u => u.type === 'mrRuno');
-            // Victory only if Runo is dead (he cannot be chipped — biceps too strong)
-            return mrR && !mrR.alive;
-        },
-        victoryText: 'Mr. Runo Cornered!',
-        turnEvent: function(turn) {
-            if (turn === 3) {
-                startCutscene([
-                    { speaker: 'NARRATOR', text: '~~ FLASHBACK ~~', color: '#555' },
-                    { speaker: 'DR. RETINA', text: 'Again. From the beginning.', color: '#88a' },
-                    { speaker: 'YOUNG HARAS', text: 'I\'ve done this seventeen times today—', color: '#aaf' },
-                    { speaker: 'DR. RETINA', text: 'Then do it an eighteenth.', color: '#88a' },
-                    { speaker: 'NARRATOR', text: 'For six months, Dr. Retina assigned Haras a single task: use "pi-hub" to download digits of pi. Increasingly large counts. Every day.', color: '#555' },
-                    { speaker: 'YOUNG HARAS', text: '*staring at the screen* ...3.14159265358979... I\'ve memorized eleven million of these.', color: '#aaf' },
-                    { speaker: 'YOUNG HARAS', text: 'There has to be something better to do with this much patience.', color: '#aaf' },
-                    { speaker: 'NARRATOR', text: 'That was the moment in this universe. Here, the evil empire was born from boredom and pi.', color: '#555' },
-                    { speaker: 'DR. RETINA', text: 'Now — the robots. Watch how I direct them. Efficiency is everything.', color: '#88a' },
-                    { speaker: 'YOUNG HARAS', text: '*scribbling notes* Routing logic... parallel command threads... I can do this better than you.', color: '#aaf' },
-                    { speaker: 'NARRATOR', text: 'Dr. Retina died shortly after. Old age. Peacefully.', color: '#555' },
-                    { speaker: 'NARRATOR', text: 'In this universe, at least.', color: '#555' },
-                    { speaker: 'NARRATOR', text: '~~ END FLASHBACK ~~', color: '#555' },
-                    { speaker: 'CAIN & ABEL', text: 'We met Dr. Retina once. He could not decide which of us to address. Neither could we.', color: '#e90' },
-                    { speaker: 'HARAS', text: 'He taught me everything. but my father just... left. Deploy the robots.', color: '#88f' }
-                ], () => {
-                    game.units.push(createUnit('robot', 1, 1, 'player'));
-                    game.units.push(createUnit('robot', 1, 8, 'player'));
-                    game.phase = GamePhase.PLAYER_TURN;
-                    showBanner('Robots Deployed!', 1500);
-                });
-            }
-            if (turn >= 10) {
-                const mrR = game.units.find(u => u.type === 'mrRuno' && u.alive && u.team === 'enemy');
-                if (mrR) {
-                    startCutscene([
-                        { speaker: 'NARRATOR', text: 'Mr. Runo\'s biceps proved too mighty. He has escaped.', color: '#aaa' }
-                    ], () => {
-                        game.phase = GamePhase.DEFEAT;
-                        document.getElementById('defeatScreen').style.display = 'flex';
-                    });
-                }
-            }
-        },
-        onVictory: function() {
-            const postCapture = [
-                { speaker: 'MR. RUNO', text: '*panting* ...you got me.', color: '#2a2' },
-                { speaker: 'HARAS', text: 'Your biceps are too strong for the chip. But I don\'t need your brain.', color: '#88f' },
-                { speaker: 'MR. RUNO', text: 'Son — I had reasons—', color: '#2a2' },
-                { speaker: 'HARAS', text: 'Don\'t.', color: '#f44' },
-                { speaker: 'HARAS', text: '...', color: '#88f' },
-                { speaker: 'MR. RUNO', text: 'You needed the pressure. Needed to be hungry.', color: '#2a2' },
-                { speaker: 'HARAS', text: 'Don\'t make excuses', color: '#f44' },
-                { speaker: 'MR. RUNO', text: 'I\'m not. I\'m simply explaining myself.', color: '#2a2' },
-                { speaker: 'NARRATOR', text: 'Haras restrains Mr. Runo using the robots. Then stares at the time machine for a long moment.', color: '#aaa' },
-                { speaker: 'HARAS', text: 'I could go back. Stop him from leaving.', color: '#88f' },
-                { speaker: 'HARAS', text: '...I\'m doing it. With my time machine.', color: '#f44' },
-                { speaker: 'NARRATOR', text: 'The timeline shifts. Mr. Runo never left. Haras was never alone.', color: '#aaa' },
-                { speaker: 'NARRATOR', text: 'But something is different now.', color: '#aaa' },
-                { speaker: 'HARAS', text: 'It doesn\'t matter. I\'ll find Zeus Larry Dunk. He\'s the next one. But the rival Harases are closing in. I won\'t lose my edge now.', color: '#88f' }
-            ];
-            startCutscene(postCapture, () => { loadLevel(12); });
+                { speaker: 'NARRATOR', text: 'The collection is complete. Only Zeus remains.', color: '#aaa' },
+                { speaker: 'HARAS', text: 'Zeus Larry Dunk. The last one. And the most dangerous.', color: '#88f' },
+                { speaker: 'NARRATOR', text: 'Haras opens the portal to Mount Olympus.', color: '#555' },
+                { speaker: 'HARAS', text: 'I have a plan.', color: '#88f' }
+            ], () => { loadLevel(12); });
         }
     },
 
@@ -952,14 +948,9 @@ const LEVELS = [
             zeus.acted = true;
             game.units.push(zeus);
 
-            startCutscene(intro, () => {
-                game.phase = GamePhase.PLAYER_TURN;
-                showBanner('Player Phase', 1200);
-            });
+            startLevel(intro);
         },
-        victoryCheck: function() {
-            return game.units.filter(u => u.alive && u.team === 'enemy').length === 0;
-        },
+        victoryCheck: allEnemiesDefeated,
         victoryText: 'Rivals Defeated!',
         onVictory: function() {
             const zeusArc = [

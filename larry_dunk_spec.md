@@ -44,7 +44,7 @@
 - [x] Larry Dunk selector: pre-level overlay with cards showing name, ★ ability, stat row (HP/ATK/DEF/MOV/RNG), ability description sentence
 - [x] Selector cards only show LDs available at that point in normal playthrough (LD_POOL_AT_LEVEL in main.js)
 - [x] LD death persistence: deployed LDs that die are removed from capturedLarryDunks before next level loads
-- [x] ldSlots capped: L6-7=2, L8-9=2, L10=2, L11=1
+- [x] ldSlots expanded: L3=3, L4=3, L5=3, L6=4, L7=3, L8=4, L9=4, L10=4, L11=3
 
 #### Variant Abilities (all implemented in combat.js / input.js)
 - [x] Spray Tan (larryDunk, britishLarry): surviving defender + adjacent enemies lose 1 range for 1 turn (sprayTanned flag; resets in endEnemyTurn)
@@ -72,14 +72,17 @@
 - [x] onVictory double-call fixed: removed from setTimeout, only fires on victory screen click
 
 #### Tetris Capture
-- [x] Canvas-based overlay, keyboard + click controls
+- [x] Canvas-based overlay, keyboard + click controls (arrow keys + WASD)
 - [x] Score thresholds: Common=200, cainAbel=100, mrRuno=800, Zeus=rigged (unwinnable)
 - [x] Speed escalation: 800ms → 150ms min, -50ms per 50 pts scored
 - [x] Zeus rigged board: constant 600ms drop, rival Haras cutscene → loadLevel(13) after 15s
 - [x] Mr. Runo non-capturable: onSuccess checks type === 'mrRuno', returns early (Runo escapes permanently)
+- [x] Visual overhaul: ghost piece (drop preview), beveled cells with glow, particles on piece lock, line clear flash, atmospheric radial gradient background
+- [x] Left info panel: unit name, score, progress bar with gradient fill, speed indicator
+- [x] Right tutorial sidebar: next piece preview with glow, controls guide (WASD/arrows), unit ability reminder
 
 #### AI
-- [x] Enemy AI: move toward nearest player unit, attack if in range
+- [x] Enemy AI: weighted targeting — score = (maxHp-hp) + 20 if Haras - distance*2; picks highest-score visible unit for both movement and attack
 - [x] Invisible units (cerealLarry) skipped by enemy AI in both target selection loops
 - [x] Mr. Runo chase level: runs for exit (level 11 index check)
 
@@ -91,6 +94,13 @@
 - [x] Skip All button in dialogue box (calls endCutscene immediately)
 - [x] Back button in dialogue (shows previous line instantly, no typewriter re-run)
 - [x] Ad Break overlay: full-screen fake YouTube-style ad with countdown
+- [x] END TURN button: prominent gold-green glow with pulsing box-shadow; disabled/greyed during enemy phase
+- [x] Phase hint text drawn on canvas above grid: "Select a unit" / "Click blue tile to move" / "Click red tile to attack — or End Turn"
+- [x] Move tiles: alpha 0.45 + subtle white inner stroke
+- [x] Attack tiles: pulsing alpha (0.38–0.53 via sin) + pink inner stroke
+- [x] Ability banners: SPRAY TAN!, CANNIBALISM!, CHAIN KILL!, TOO CLOSE! (paraplegic blocked), SURVIVED! (counterattack clamped)
+- [x] Counterattacks cannot kill the attacker — floor at 1 HP; SURVIVED! banner fires if clamp triggers
+- [x] Attack-select bug fixed: clicking a friendly unit tile in ATTACK_SELECT no longer cancels the attack
 
 #### SFX
 - [x] 13 synthesized sounds via Web Audio API (sfx.js): select, move, hit, death, tetris_place, tetris_clear, tetris_success, tetris_fail, player_phase, enemy_phase, ad_jingle, victory, defeat
@@ -123,6 +133,56 @@
 - [x] Level 10 (Rival Haras): removed 2 robots
 - [x] Level 11 (Mr. Runo): HP 45→35, WALL barrier forces 4-turn escape
 - [x] femaleLarry nerfed: HP 22→16, ATK 5→4, DEF 3→2
+- [x] Levels 3–11: expanded LD slots + added compensating enemies per level (guards + robots)
+
+---
+
+## PENDING IMPLEMENTATION
+
+### Cinematic Cutscenes (cutscene.js + ui.js + levels.js)
+- [ ] Add `startCinema(scenes, callback)` system: each scene has a full-screen canvas backdrop (dark gradient, color tint, pixel art characters) instead of showing the game grid. For flashbacks, prologues, and context-heavy moments.
+- [ ] Prologue (level 0) becomes a full cinematic: lab scene with Haras + brain chip diagram, broadcast announcement, etc.
+- [ ] Post-tutorial brain chip scene: visual sequence of chip being inserted into Larry Dunk, Larry's reaction panel, "An army of Larry Dunks" reveal — more explained, more dramatic.
+
+### Cain & Abel Pre-Battle Scene (levels.js level 2)
+- [ ] Before the fight, show C&A talking to their guards *preparing for battle*. "We only need one horse." comes from a strategic pre-fight conversation, not post-capture.
+
+### Mr. Runo Rework (levels.js level 9 in new order)
+- [ ] Runo successfully escapes through the EXIT (player cannot catch him directly). Victory condition: defeat all guards/robots.
+- [ ] On player victory, Runo reaches exit → cutscene: "He escaped!" → Haras deploys robots → robots intercept Runo → Runo is captured by robots.
+- [ ] Removes 10-turn hard defeat if Runo escapes; instead it's the scripted narrative outcome.
+
+### Level Reorder (levels.js + main.js LD_POOL_AT_LEVEL)
+- [x] Move Investment Larry (formerly level 8) and Female Larry (formerly level 9) to AFTER Mr. Runo, before Zeus.
+- [x] New order: 0 Prologue → 1 Tutorial → 2 Cain&Abel → 3 British → 4 Survivalist → 5 Paraplegic → 6 Axe → 7 Cereal → 8 Rival Haras → 9 Runo → 10 Investment → 11 Female → 12 Zeus → 13 Final
+- [x] Update all `loadLevel()` calls, `LD_POOL_AT_LEVEL`, and `checkTurnEvents` level index references.
+- [x] Consequences of Runo capture "felt a little" in levels 10–11 (Investment intro: "Haras has been quieter since the Runo situation").
+
+### Credits Scene (levels.js level 13 + main.js)
+- [ ] After ending cutscene in final level, render a credits screen on canvas:
+  - "LARRY DUNK: THE THOUSAND HORSES"
+  - "Made by Claude"
+  - "Special thank you to Victor Winter"
+  - Scrolling or animated text, dark background with gold palette
+
+### Music System (music.js — new file)
+- [ ] Create `music.js` with Web Audio API synthesized tracks:
+  - `title`: ambient, eerie, slow arpeggios
+  - `playerPhase`: tactical, medium energy
+  - `enemyPhase`: tense, minor key
+  - `cutscene`: cinematic, dramatic
+  - `tetris`: frantic, upbeat
+  - `victory`: triumphant fanfare
+  - `defeat`: somber
+  - `ending`: bittersweet, slow
+  - `credits`: gentle, reflective
+- [ ] Level 12 (The Thousand Horses battle): play `music/Song For Wemmbu PLAYFUL MASSACRE (2v1000 ver.).mp3` — NOT synthesized
+- [ ] `playMusic(trackName)` and `stopMusic()` in music.js; called from levels.js and phase transitions
+- [ ] Load order: add music.js before main.js in index.html
+
+### Tetris Early Win (tetris.js)
+- [ ] When score reaches threshold, immediately trigger success — don't wait for board to fill
+- [ ] Show win banner/animation, then call `tetris.onSuccess()` after brief delay
 
 ---
 

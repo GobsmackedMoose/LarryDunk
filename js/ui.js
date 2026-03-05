@@ -67,9 +67,11 @@ function showBanner(text, duration) {
 }
 
 function updateTopBar() {
-    document.getElementById('turnInfo').textContent =
-        game.phase === GamePhase.ENEMY_TURN ? 'Enemy Phase' : 'Player Phase';
+    const isEnemy = game.phase === GamePhase.ENEMY_TURN;
+    document.getElementById('turnInfo').textContent = isEnemy ? 'Enemy Phase' : 'Player Phase';
     document.getElementById('turnCount').textContent = `Turn ${game.turn}`;
+    const endBtn = document.getElementById('btnEndTurn');
+    if (endBtn) endBtn.disabled = isEnemy;
 }
 
 function updateAnimations() {
@@ -84,6 +86,12 @@ function render() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (game.phase === GamePhase.TITLE || game.phase === GamePhase.ENDING) return;
+
+    // Cinema cutscene: draw scene background instead of game grid
+    if (game.phase === GamePhase.CUTSCENE && game.cinemaDrawScene) {
+        game.cinemaDrawScene(ctx, canvas);
+        return;
+    }
 
     // Draw grid
     for (let gy = 0; gy < game.gridH; gy++) {
@@ -174,13 +182,31 @@ function render() {
         ctx.lineWidth = 1;
     }
 
+    // Phase hint text (drawn above the grid)
+    const phaseHints = {
+        [GamePhase.PLAYER_TURN]:  'Select a unit',
+        [GamePhase.UNIT_SELECTED]: 'Click blue tile to move',
+        [GamePhase.ATTACK_SELECT]: 'Click red tile to attack — or End Turn',
+        [GamePhase.UNIT_MOVED]:    'Click red tile to attack — or End Turn',
+    };
+    const phaseHint = phaseHints[game.phase];
+    if (phaseHint) {
+        ctx.font = '12px Courier New';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(160, 160, 210, 0.75)';
+        ctx.fillText(phaseHint, GRID_OFFSET_X, GRID_OFFSET_Y - 6);
+    }
+
     // Movement tiles
     if (game.phase === GamePhase.UNIT_SELECTED) {
         for (const t of game.moveTiles) {
             const px = t.x * TILE_SIZE + GRID_OFFSET_X;
             const py = t.y * TILE_SIZE + GRID_OFFSET_Y;
-            ctx.fillStyle = 'rgba(50, 100, 255, 0.35)';
+            ctx.fillStyle = 'rgba(50, 100, 255, 0.45)';
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         }
         // Attack range preview: show where the unit could attack from the hovered move tile
         const hoveredMove = game.moveTiles.find(t => t.x === game.cursor.x && t.y === game.cursor.y);
@@ -212,13 +238,17 @@ function render() {
         }
     }
 
-    // Attack tiles
+    // Attack tiles (pulsing red)
     if (game.phase === GamePhase.ATTACK_SELECT) {
+        const atkPulse = 0.38 + 0.15 * Math.sin(Date.now() / 200);
         for (const t of game.attackTiles) {
             const px = t.x * TILE_SIZE + GRID_OFFSET_X;
             const py = t.y * TILE_SIZE + GRID_OFFSET_Y;
-            ctx.fillStyle = 'rgba(255, 50, 50, 0.4)';
+            ctx.fillStyle = `rgba(255, 50, 50, ${atkPulse})`;
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = 'rgba(255,180,180,0.35)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         }
     }
 
