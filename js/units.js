@@ -43,12 +43,12 @@ function createUnit(type, gx, gy, team) {
         },
         britishLarry: {
             name: 'British Larry Dunk', hp: 32, atk: 8, def: 6, mov: 3, range: 1,
-            spriteKey: 'britishLarry', special: 'Spray Tan (British)',
-            desc: 'If target survives your attack, they and adjacent enemies lose 1 range until your next turn.',
+            spriteKey: 'britishLarry', special: 'Parliamentary Order',
+            desc: 'High DEF — reflects years of surviving political debate.',
             isLarryDunk: true
         },
         financierLarry: {
-            name: 'Financier Larry Dunk', hp: 28, atk: 10, def: 4, mov: 4, range: 1,
+            name: 'Survivalist Larry Dunk', hp: 28, atk: 10, def: 4, mov: 4, range: 1,
             spriteKey: 'financierLarry', special: 'Cannibalism',
             desc: 'Heals HP equal to damage dealt on every attack.',
             isLarryDunk: true

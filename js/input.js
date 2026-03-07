@@ -60,7 +60,6 @@ function handleGridClick(gx, gy) {
             document.getElementById('moveConfirm').style.display = 'flex';
         } else if (clickedAtk) {
             // Attack from current position without moving
-            game.selectedUnit.attacksLeft = game.selectedUnit.type === 'cainAbel' ? 2 : 1;
             game.moveTiles = [];
             executeAttack(gx, gy);
         } else {
@@ -111,7 +110,9 @@ function executeAttack(gx, gy) {
     if (game.selectedUnit.attacksLeft <= 0) {
         finishUnitAction();
     } else {
-        // Cain & Abel gets another attack
+        // Cain & Abel gets another attack — switch to ATTACK_SELECT so the next click
+        // goes through that branch and doesn't accidentally reset attacksLeft again
+        game.phase = GamePhase.ATTACK_SELECT;
         game.attackTiles = getAttackTiles(game.selectedUnit, game.selectedUnit.gx, game.selectedUnit.gy);
         if (game.attackTiles.length === 0) finishUnitAction();
     }

@@ -149,6 +149,13 @@
 
 ## PENDING IMPLEMENTATION
 
+### Bug Fixes & Improvements (priority order)
+- [x] Map does not load when progressing from level to level on GitHub Pages — root cause: `loadLevel` reset `game.grid=[]` but not `game.gridW/gridH`; render loop crashed during LD selector gap. Fix: also reset `game.gridW=0; game.gridH=0` in `loadLevel`. First fails at island (L4) and L5 because those are the first levels with ldSlots encountered in normal play.
+- [ ] Cain & Abel can attack more than twice (infinite) and at range greater than 1 — bug in attacksLeft reset/decrement logic or range handling
+- [ ] British Larry Dunk should NOT have Spray Tan ability — remove it; give him a different or no special
+- [ ] Survivalist Larry shown as "Financier Larry" in LD selector screen — fix display name in showLarryDunkSelector
+- [ ] Better tutorial: highlight the relevant unit/tile on canvas while each tutorial dialogue line plays, rather than dialogue-only instruction
+
 ### Music System (music.js — new file)
 - [ ] Create `music.js` with Web Audio API synthesized tracks:
   - `title`: ambient, eerie, slow arpeggios

@@ -130,6 +130,7 @@ function endEnemyTurn() {
     game.turn++;
     game.units.forEach(u => {
         u.acted = false;
+        u.attacksLeft = u.type === 'cainAbel' ? 2 : 1;
         // Reset Spray Tan debuff — restores range for next player turn
         if (u.sprayTanned) {
             u.range++;

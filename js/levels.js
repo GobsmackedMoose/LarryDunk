@@ -1124,6 +1124,8 @@ function loadLevel(index) {
     game.turn = 1;
     game.units = [];
     game.grid = [];
+    game.gridW = 0;
+    game.gridH = 0;
     game.selectedUnit = null;
     game.moveTiles = [];
     game.attackTiles = [];

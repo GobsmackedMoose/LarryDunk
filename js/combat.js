@@ -106,15 +106,15 @@ function _resolveCombat(attacker, defender, isChain) {
 
         // Spray Tan blind — Larry Dunk and British Larry: defender + adjacent enemies
         // lose 1 range for the rest of this turn (resets at start of next player turn)
-        if (attacker.type === 'larryDunk' || attacker.type === 'britishLarry') {
+        if (attacker.type === 'larryDunk') {
             const blinded = game.units.filter(u =>
                 u.alive && u.team !== attacker.team &&
                 getManhattan(u.gx, u.gy, defender.gx, defender.gy) <= 1
             );
             if (blinded.length > 0) showBanner('SPRAY TAN!', 1200);
             blinded.forEach(u => {
-                if (!u.sprayTanned) {
-                    u.range = Math.max(1, u.range - 1);
+                if (!u.sprayTanned && u.range > 1) {
+                    u.range--;
                     u.sprayTanned = true;
                 }
             });
