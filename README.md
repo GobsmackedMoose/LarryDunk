@@ -1,4 +1,4 @@
-ai generated game for an assignment I made for a required class for the Scott Scholars Scholarship program, AIML 1870.
+ai generated game for an assignment I made for a required class for my Scholarship program.
 
 It involves music from Azali- Song For Wemmbu | PLAYFUL MASSACRE (2v1000 ver.) and some other public domain music that are in the credits of the game (the files are also in the music folder). They had a CC BY license. 
 Here is a link to Azali's Playful Massacre remix on youtube: https://www.youtube.com/watch?v=UQh7eFnmhpA It is also available on spotify. 
